@@ -7,24 +7,47 @@ import { UserSchema, SignInSchema, CreateRoomSchema } from "@repo/common/types"
 
 const app = express()
 
+app.use(express.json())
+
 app.get('/', (req, res) => {
-  res.send('Hello World')
+    res.send('Hello World')
 })
 
-app.post('/signin', (req,res) => {
-    const userId = 1
-    const token = jwt.sign({
-        userId
-    }, JWT_SECRET)
-    res.json({
-        token
-    })
+app.post('/signin', async (req, res) => {
+    const parsed = SignInSchema.safeParse(req.body)
+    if (!parsed.success) {
+        res.json({
+            message: "Failed to sign in"
+        })
+        return
+    }
+    try {
+        const user = await prisma.user.findFirst({
+            where: {
+                username: parsed.data.username,
+            }
+        })
+        if(user) {
+            const token = jwt.sign({userId: user.id}, JWT_SECRET)
+            res.json({
+                token
+            })
+            return
+        }
+        res.json({
+            message: "User not found"
+        })
+    } catch(e) {
+        res.json({
+            message: "Error occurred while signing in"
+        })
+    }
 })
 
-app.post('/signup', async (req,res) => {
+app.post('/signup', async (req, res) => {
     const body = req.body
     const parsed = UserSchema.safeParse(body)
-    if(!parsed.success) {
+    if (!parsed.success) {
         res.json({
             message: "Invalid inputs"
         })
@@ -32,14 +55,20 @@ app.post('/signup', async (req,res) => {
     }
 
     try {
-        await prisma.user.create({
+        const user = await prisma.user.create({
             data: {
                 username: parsed.data.username,
                 password: parsed.data.password,
                 email: parsed.data.email
             }
         })
-    } catch(e) {
+        res.json({
+            message: "User created successfully"
+        })
+    } catch (e) {
+        if(e instanceof Error) {
+            console.log(e.message)
+        }
         res.json({
             message: "User already exists"
         }).status(401)
@@ -48,7 +77,7 @@ app.post('/signup', async (req,res) => {
 
 })
 
-app.post('/room', middleware, (req,res) => {
+app.post('/room', middleware, (req, res) => {
     res.json({
         "roomId": "12121"
     })
