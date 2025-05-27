@@ -20,6 +20,9 @@ importers:
 
   apps/http-server:
     dependencies:
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@types/express':
         specifier: ^5.0.2
         version: 5.0.2
@@ -123,6 +126,9 @@ importers:
       '@prisma/client':
         specifier: 6.5.0
         version: 6.5.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2)
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*

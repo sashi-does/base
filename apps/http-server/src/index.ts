@@ -2,6 +2,8 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '@repo/backend-common/config'
 import middleware from './middleware'
+import { prisma } from "@repo/db/client"
+import { UserSchema, SignInSchema, CreateRoomSchema } from "@repo/common/types"
 
 const app = express()
 
@@ -20,7 +22,7 @@ app.post('/signin', (req,res) => {
 })
 
 app.post('/signup', (req,res) => {
-
+    
 })
 
 app.post('/room', middleware, (req,res) => {
