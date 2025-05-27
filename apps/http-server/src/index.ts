@@ -21,8 +21,31 @@ app.post('/signin', (req,res) => {
     })
 })
 
-app.post('/signup', (req,res) => {
-    
+app.post('/signup', async (req,res) => {
+    const body = req.body
+    const parsed = UserSchema.safeParse(body)
+    if(!parsed.success) {
+        res.json({
+            message: "Invalid inputs"
+        })
+        return
+    }
+
+    try {
+        await prisma.user.create({
+            data: {
+                username: parsed.data.username,
+                password: parsed.data.password,
+                email: parsed.data.email
+            }
+        })
+    } catch(e) {
+        res.json({
+            message: "User already exists"
+        }).status(401)
+        return
+    }
+
 })
 
 app.post('/room', middleware, (req,res) => {
