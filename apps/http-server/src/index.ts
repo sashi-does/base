@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '@repo/backend-common/config'
 import middleware from './middleware'
@@ -24,7 +24,7 @@ app.post('/signin', async (req, res) => {
     try {
         const user = await prisma.user.findFirst({
             where: {
-                username: parsed.data.username,
+                email: parsed.data.email,
             }
         })
         if(user) {
@@ -77,10 +77,60 @@ app.post('/signup', async (req, res) => {
 
 })
 
-app.post('/room', middleware, (req, res) => {
-    res.json({
-        "roomId": "12121"
+app.post('/room', middleware, async (req: Request, res: Response) => {
+    const userId = req.userId
+    const parsed = CreateRoomSchema.safeParse(req.body)
+    if(!parsed.success) {
+        res.json({
+            message: "Invalid inputs"
+        })
+        return
+    }
+    if(!userId) {
+        res.json({
+            message: "Unauthenticated"
+        })
+        return
+    }
+    try {
+        const room = await prisma.room.create({
+            data: {
+                adminId: userId,
+                slug: parsed.data.name
+            }
+        })
+        res.json({
+            message: "Room created successfully",
+            roomId: room.id
+        })
+    } catch(e) {
+        res.json({
+            message: "Room already exists with this name"
+        })
+    }
+    
+})
+
+app.get('/chats/:roomId', async (req,res) => {
+    try {
+        const { roomId } = req.params
+    const messages = await prisma.chat.findMany({
+        where: {
+            roomId: parseInt(roomId as string)
+        },
+        orderBy : {
+            id: "desc"
+        },
+        take: 50
     })
+    res.json({
+        chats: messages
+    })
+    } catch (e) {
+        res.json({
+            message: "error"
+        })
+    }
 })
 
 app.listen(3001)
